@@ -1,4 +1,7 @@
 import tkinter as tk
+import torch
+from system_nn import *
+from torchvision import transforms
 from PIL import Image, ImageDraw, ImageOps
 import numpy as np
 from utils import *
@@ -17,6 +20,11 @@ class DigitClassifierApp:
 
         self.button_predict = tk.Button(master, text="Predict", command=self.predict)
         self.button_predict.pack()
+
+        self.button_predict_nn = tk.Button(
+            master, text="Predict NN", command=self.predict_nn
+        )
+        self.button_predict_nn.pack()
 
         self.button_clear = tk.Button(master, text="Clear", command=self.clear)
         self.button_clear.pack()
@@ -54,6 +62,30 @@ class DigitClassifierApp:
         predicted_digit = prediction[0]
 
         self.label.config(text=f"Predicted Digit: {predicted_digit}")
+
+    def predict_nn(self):
+        img = self.image.resize((28, 28))
+        img = ImageOps.invert(img)
+        transform = transforms.Compose(
+            [
+                transforms.Grayscale(num_output_channels=1),  # Ensure single channel
+                transforms.ToTensor(),  # Convert to tensor [0,1]
+                transforms.Normalize(
+                    (0.1307,), (0.3081,)
+                ),  # Use same normalization as training
+            ]
+        )
+
+        img_tensor = transform(img)
+        img_tensor = img_tensor.unsqueeze(0)
+
+        model = Net()
+        model.load_state_dict(torch.load("cnn_model.pth"))
+        model.eval()
+        with torch.no_grad():
+            output = model(img_tensor)
+            pred = output.argmax(dim=1, keepdim=True).item()
+        self.label.config(text=f"Predicted Digit: {pred}")
 
 
 # Run the app

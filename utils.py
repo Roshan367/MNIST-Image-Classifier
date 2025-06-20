@@ -1,12 +1,14 @@
 import pandas as pd
+import torch
 import sys
 import os
 from PIL import Image
+from torchvision import transforms
 import numpy as np
 import joblib
 
 
-def get_dataset(split):
+def get_dataset(split, tensor=False):
     # Load dataset based on the split type
     csv_file_path = "./mnist_subset/image_labels.csv"
     df = pd.read_csv(csv_file_path)
@@ -22,16 +24,33 @@ def get_dataset(split):
         print("Error")
         sys.exit()
 
+    transform = transforms.Compose(
+        [
+            transforms.Grayscale(num_output_channels=1),
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,)),
+        ]
+    )
+
     data_images = []
     data_labels = []
 
-    for idx, row in data_df.iterrows():
+    for _, row in data_df.iterrows():
         image_path = os.path.join(data_images_dir, row["Filename"])
         img = Image.open(image_path)
-        data_images.append(np.array(img).flatten())
-        data_labels.append(row["Label"])
+        if tensor:
+            img = transform(img)
+        else:
+            img = np.array(img)
+        data_images.append(img)
+        data_labels.append(int(row["Label"]))
 
-    return np.array(data_images), np.array(data_labels)
+    if tensor:
+        data_images = torch.stack(data_images)
+        data_labels = torch.tensor(data_labels, dtype=torch.long)
+        return data_images, data_labels
+    else:
+        return np.array(data_images), np.array(data_labels)
 
 
 def save_model(model, filename="trained_model.pkl"):
