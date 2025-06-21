@@ -1,13 +1,17 @@
 import tkinter as tk
 import torch
+import torch.nn.functional as F
 from system_nn import *
 from torchvision import transforms
 from PIL import Image, ImageDraw, ImageOps
 import numpy as np
 from utils import *
 import system
+from sklearn.metrics import accuracy_score
 
 model = load_model()
+
+test_losses = []
 
 
 class DigitClassifierApp:
@@ -25,6 +29,12 @@ class DigitClassifierApp:
             master, text="Predict NN", command=self.predict_nn
         )
         self.button_predict_nn.pack()
+
+        self.button_test = tk.Button(master, text="Predict", command=self.test)
+        self.button_test.pack()
+
+        self.button_test_nn = tk.Button(master, text="Predict", command=self.test_nn)
+        self.button_test_nn.pack()
 
         self.button_clear = tk.Button(master, text="Clear", command=self.clear)
         self.button_clear.pack()
@@ -86,6 +96,32 @@ class DigitClassifierApp:
             output = model(img_tensor)
             pred = output.argmax(dim=1, keepdim=True).item()
         self.label.config(text=f"Predicted Digit: {pred}")
+
+    def test(self):
+        model = load_model()
+        noise_test_images, noise_test_labels = get_dataset("test")
+        noise_test_feature_vectors = system.image_to_reduced_feature(noise_test_images)
+        noise_test_predictions = model.predict(noise_test_feature_vectors)
+        noise_test_accuracy = accuracy_score(noise_test_labels, noise_test_predictions)
+        self.label.config(text=f"Test Score:{noise_test_accuracy}")
+
+    def test_nn(self):
+        test_loader = get_dataset("test", tensor=True)
+        model = Net()
+        model.load_state_dict(torch.load("cnn_model.pth"))
+        model.eval()
+        test_loss = 0
+        correct = 0
+        with torch.no_grad():
+            for data, target in test_loader:
+                output = model(data)
+                test_loss += F.nll_loss(output, target, reduction="sum").item()
+                pred = output.data.max(1, keepdim=True)[1]
+                correct += pred.eq(target.data.view_as(pred)).sum()
+        test_loss /= len(test_loader.dataset)
+        test_losses.append(test_loss)
+        accuracy = 100.0 * correct / len(test_loader.dataset)
+        self.label.config(text=f"Accuracy (Clean):{accuracy}")
 
 
 # Run the app

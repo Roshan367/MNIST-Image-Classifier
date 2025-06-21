@@ -321,7 +321,7 @@ will then be the optimal choice
 
 
 def cross_validate_knn(train_data, train_labels, k_range, features, num_folds=10):
-    n = len(train_data)
+    n = len(train_data) // 20
     fold_size = n // num_folds
     accuracies = []
 
