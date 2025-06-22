@@ -20,32 +20,47 @@ class DigitClassifierApp:
         master.title("MNIST Digit Classifier")
 
         self.canvas = tk.Canvas(master, width=280, height=280, bg="white")
-        self.canvas.pack()
+        self.canvas.place(anchor=tk.NW)
 
-        self.button_predict = tk.Button(master, text="Predict", command=self.predict)
-        self.button_predict.pack()
+        self.button_predict = tk.Button(
+            master, text="Predict Image KNN", command=self.predict
+        )
+        self.button_predict.place(x=0, y=290)
 
         self.button_predict_nn = tk.Button(
-            master, text="Predict NN", command=self.predict_nn
+            master, text="Predict Image CNN", command=self.predict_nn
         )
-        self.button_predict_nn.pack()
-
-        self.button_test = tk.Button(master, text="Predict", command=self.test)
-        self.button_test.pack()
-
-        self.button_test_nn = tk.Button(master, text="Predict", command=self.test_nn)
-        self.button_test_nn.pack()
+        self.button_predict_nn.place(x=0, y=330)
 
         self.button_clear = tk.Button(master, text="Clear", command=self.clear)
-        self.button_clear.pack()
+        self.button_clear.place(x=0, y=370)
 
-        self.label = tk.Label(master, text="Draw a digit and click Predict")
-        self.label.pack()
+        self.label_knn = tk.Label(master, text="KNN Prediction: ")
+        self.label_knn.place(x=150, y=295)
+
+        self.label_cnn = tk.Label(master, text="CNN Prediction: ")
+        self.label_cnn.place(x=150, y=335)
 
         self.image = Image.new("L", (280, 280), "white")
         self.draw = ImageDraw.Draw(self.image)
 
         self.canvas.bind("<B1-Motion>", self.paint)
+
+        self.button_test = tk.Button(
+            master, text="Test Accuracy KNN", command=self.test
+        )
+        self.button_test.place(x=350, y=30)
+
+        self.button_test_nn = tk.Button(
+            master, text="Test Accuracy CNN", command=self.test_nn
+        )
+        self.button_test_nn.place(x=350, y=70)
+
+        self.label_knn_accuracy = tk.Label(master, text="KNN Accuracy (Clean): ")
+        self.label_knn_accuracy.place(x=500, y=35)
+
+        self.label_cnn_accuracy = tk.Label(master, text="CNN Accuracy (Clean): ")
+        self.label_cnn_accuracy.place(x=500, y=75)
 
     def paint(self, event):
         x1, y1 = (event.x - 8), (event.y - 8)
@@ -70,8 +85,9 @@ class DigitClassifierApp:
         model = load_model()
         prediction = model.predict(pca_input)
         predicted_digit = prediction[0]
+        text = f"KNN Prediction: {predicted_digit}"
 
-        self.label.config(text=f"Predicted Digit: {predicted_digit}")
+        self.label_knn.config(text=text)
 
     def predict_nn(self):
         img = self.image.resize((28, 28))
@@ -94,16 +110,18 @@ class DigitClassifierApp:
         model.eval()
         with torch.no_grad():
             output = model(img_tensor)
-            pred = output.argmax(dim=1, keepdim=True).item()
-        self.label.config(text=f"Predicted Digit: {pred}")
+            predicted_digit = output.argmax(dim=1, keepdim=True).item()
+        text = f"CNN Prediction: {predicted_digit}"
+        self.label_cnn.config(text=text)
 
     def test(self):
         model = load_model()
-        noise_test_images, noise_test_labels = get_dataset("test")
-        noise_test_feature_vectors = system.image_to_reduced_feature(noise_test_images)
-        noise_test_predictions = model.predict(noise_test_feature_vectors)
-        noise_test_accuracy = accuracy_score(noise_test_labels, noise_test_predictions)
-        self.label.config(text=f"Test Score:{noise_test_accuracy}")
+        test_images, test_labels = get_dataset("test")
+        test_feature_vectors = system.image_to_reduced_feature(test_images)
+        test_predictions = model.predict(test_feature_vectors)
+        test_accuracy = accuracy_score(test_labels, test_predictions) * 100
+        text = f"KNN Accuracy (Clean): {round(test_accuracy, 3)}"
+        self.label_knn_accuracy.config(text=text)
 
     def test_nn(self):
         test_loader = get_dataset("test", tensor=True)
@@ -121,7 +139,8 @@ class DigitClassifierApp:
         test_loss /= len(test_loader.dataset)
         test_losses.append(test_loss)
         accuracy = 100.0 * correct / len(test_loader.dataset)
-        self.label.config(text=f"Accuracy (Clean):{accuracy}")
+        text = f"CNN Accuracy (Clean): {round(float(accuracy), 3)}"
+        self.label_cnn_accuracy.config(text=text)
 
 
 # Run the app
