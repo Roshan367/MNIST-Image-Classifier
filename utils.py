@@ -10,10 +10,10 @@ import joblib
 from torchvision.datasets import MNIST
 
 
-def get_dataset(split, tensor=False):
+def get_dataset(split, tensor="default"):
     batch_size_train = 64
     batch_size_test = 1000
-    if tensor:
+    if tensor == "pytorch cnn":
         train_loader = torch.utils.data.DataLoader(
             MNIST(
                 "/home/roshan/Documents/MNIST-Image-Classifier/mnist_subset/",
@@ -49,8 +49,31 @@ def get_dataset(split, tensor=False):
             return train_loader
         else:
             return test_loader
+
+    elif tensor == "cnn":
+        train_dataset = MNIST(
+            root="/home/roshan/Documents/MNIST-Image-Classifier/mnist_subset/",
+            train=True,
+            download=True,
+            transform=None,
+        )
+        test_dataset = MNIST(
+            root="/home/roshan/Documents/MNIST-Image-Classifier/mnist_subset/",
+            train=False,
+            download=True,
+            transform=None,
+        )
+        X_train = train_dataset.data.float() / 255.0  # Normalize to [0.0, 1.0]
+        y_train = train_dataset.targets  # Labels: shape [60000]
+        X_test = test_dataset.data.float() / 255.0
+        y_test = test_dataset.targets
+
+        if split == "train":
+            return X_train.numpy(), y_train.numpy()
+        else:
+            return X_test.numpy(), y_test.numpy()
+
     else:
-        # Load raw MNIST PIL images
         mnist_train = MNIST(
             root="/home/roshan/Documents/MNIST-Image-Classifier/mnist_subset/",
             train=True,
@@ -87,8 +110,21 @@ def load_model(filename="trained_model.pkl"):
     # Load model from file with error handling if file is missing
     try:
         model = joblib.load(filename)
-        print(f"Model loaded from {filename}")
         return model
     except FileNotFoundError:
-        print(f"File {filename} not found")
         sys.exit()
+
+
+def save_model_cnn(conv, full, filename="cnn_model.pkl"):
+    model_data = {"conv": conv.get_params(), "full": full.get_params()}
+
+    with open(filename, "wb") as f:
+        joblib.dump(model_data, f)
+
+
+def load_model_cnn(conv, full, filename="cnn_model.pkl"):
+    with open(filename, "rb") as f:
+        model_data = joblib.load(f)
+
+    conv.set_params(model_data["conv"])
+    full.set_params(model_data["full"])

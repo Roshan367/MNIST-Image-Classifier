@@ -1,19 +1,33 @@
-from sklearn.metrics import accuracy_score  # For calculating accuracy
-from utils import *  # Utility functions for data loading and model management
-import system  # Module containing feature extraction functions
+import numpy as np
+from utils import *
+from training import *
+from sklearn.metrics import accuracy_score
+from keras.utils import to_categorical
+
+(train_images, train_labels), (test_images, test_labels) = (
+    keras.datasets.mnist.load_data()
+)
+
+X_test = test_images / 255.0
+y_test = test_labels
+
+y_test = to_categorical(y_test)
 
 
-def main():
-    # Load the trained model
-    model = load_model()
+conv = Convolution((28, 28), 6, 1)
+pool = MaxPool(2)
+full = Connected(121, 10)
 
-    # Evaluate model on noisy test data
-    noise_test_images, noise_test_labels = get_dataset("test")
-    noise_test_feature_vectors = system.image_to_reduced_feature(noise_test_images)
-    noise_test_predictions = model.predict(noise_test_feature_vectors)
-    noise_test_accuracy = accuracy_score(noise_test_labels, noise_test_predictions)
-    print(f"Accuracy on noise_test set: {noise_test_accuracy * 100:.2f}%")
+load_model(conv, full)
 
+predictions = []
 
-if __name__ == "__main__":
-    main()
+for data in X_test:
+    pred = predict(data, conv, pool, full)
+    one_hot_pred = np.zeros_like(pred)
+    one_hot_pred[np.argmax(pred)] = 1
+    predictions.append(one_hot_pred.flatten())
+
+predictions = np.array(predictions)
+
+print(f"{accuracy_score(predictions, y_test) * 100.0}%")
