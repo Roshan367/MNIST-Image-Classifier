@@ -100,13 +100,13 @@ def get_dataset(split, tensor="default"):
             return X_test[:3000], y_test[:3000]
 
 
-def save_model(model, filename="trained_model.pkl"):
+def save_model(model, filename="models/trained_model.pkl"):
     # Save the model to a file
     joblib.dump(model, filename)
     print(f"Model saved to {filename}")
 
 
-def load_model(filename="trained_model.pkl"):
+def load_model(filename="models/trained_model.pkl"):
     # Load model from file with error handling if file is missing
     try:
         model = joblib.load(filename)
@@ -115,14 +115,14 @@ def load_model(filename="trained_model.pkl"):
         sys.exit()
 
 
-def save_model_cnn(conv, full, filename="cnn_model.pkl"):
+def save_model_cnn(conv, full, filename="models/cnn_model.pkl"):
     model_data = {"conv": conv.get_params(), "full": full.get_params()}
 
     with open(filename, "wb") as f:
         joblib.dump(model_data, f)
 
 
-def load_model_cnn(conv, full, filename="cnn_model.pkl"):
+def load_model_cnn(conv, full, filename="models/cnn_model.pkl"):
     with open(filename, "rb") as f:
         model_data = joblib.load(f)
 

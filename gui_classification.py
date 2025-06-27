@@ -1,12 +1,13 @@
 import tkinter as tk
 import torch
 import torch.nn.functional as F
-from system_nn import *
+from Pytorch_CNN.system_nn import *
 from torchvision import transforms
 from PIL import Image, ImageDraw, ImageOps
 import numpy as np
 from utils import *
-import system
+import PCA_KNN.system as system
+from Scratch_CNN.loss import *
 from train import *
 from sklearn.metrics import accuracy_score
 from keras.utils import to_categorical
@@ -119,7 +120,7 @@ class DigitClassifierApp:
         img_tensor = img_tensor.unsqueeze(0)
 
         model = Net()
-        model.load_state_dict(torch.load("cnn_model.pth"))
+        model.load_state_dict(torch.load("models/cnn_model.pth"))
         model.eval()
         with torch.no_grad():
             output = model(img_tensor)
@@ -139,7 +140,7 @@ class DigitClassifierApp:
     def test_nn(self):
         test_loader = get_dataset("test", tensor="pytorch cnn")
         model = Net()
-        model.load_state_dict(torch.load("cnn_model.pth"))
+        model.load_state_dict(torch.load("models/cnn_model.pth"))
         model.eval()
         test_loss = 0
         correct = 0

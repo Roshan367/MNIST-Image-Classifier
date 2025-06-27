@@ -1,14 +1,14 @@
 from utils import *
 import torch
-import system
+import PCA_KNN.system as system
 import torch.nn.functional as F
-from system_nn import *
+from Pytorch_CNN.system_nn import *
 import torch.optim as optim
 import numpy as np
-from convolution import *
-from max_pooling import *
-from layers import *
-from loss import *
+from Scratch_CNN.convolution import *
+from Scratch_CNN.max_pooling import *
+from Scratch_CNN.layers import *
+from Scratch_CNN.loss import *
 from keras.utils import to_categorical
 
 
@@ -94,16 +94,6 @@ def train_network(X, y, conv, pool, full, lr=0.01, epochs=5):
     save_model_cnn(conv, full)
 
 
-def predict(input_sample, conv, pool, full):
-    conv_out = conv.forward(input_sample)
-    pool_out = pool.forward(conv_out)
-
-    flattened_output = pool_out.flatten()
-
-    predictions = full.forward(flattened_output)
-    return predictions
-
-
 def main():
     print("Training Scratch CNN")
     train_network(X_train, y_train, conv, pool, full)
@@ -125,7 +115,7 @@ def main():
     print("Training CNN Model")
     for epoch in range(1, n_epochs + 1):
         train(epoch)
-    torch.save(network.state_dict(), "cnn_model.pth")
+    torch.save(network.state_dict(), "models/cnn_model.pth")
 
 
 if __name__ == "__main__":
