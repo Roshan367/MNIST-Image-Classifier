@@ -7,8 +7,10 @@ from PIL import Image, ImageDraw, ImageOps
 import numpy as np
 from utils import *
 import PCA_KNN.system as system
-from Scratch_CNN.loss import *
-from train import *
+import Scratch_CNN.loss as scratch_loss
+import Scratch_CNN.convolution as conv
+import Scratch_CNN.max_pooling as pool
+import Scratch_CNN.layers as layers
 from sklearn.metrics import accuracy_score
 from keras.utils import to_categorical
 
@@ -160,16 +162,16 @@ class DigitClassifierApp:
         X_test, y_test = get_dataset("test", tensor="cnn")
         y_test = to_categorical(y_test)
 
-        conv = Convolution((28, 28), 6, 1)
-        pool = MaxPool(2)
-        full = Connected(121, 10)
+        conv_test = conv.Convolution((28, 28), 6, 1)
+        pool_test = pool.MaxPool(2)
+        full_test = layers.Connected(121, 10)
 
-        load_model_cnn(conv, full)
+        load_model_cnn(conv_test, full_test)
 
         predictions = []
 
         for data in X_test:
-            pred = predict(data, conv, pool, full)
+            pred = scratch_loss.predict(data, conv_test, pool_test, full_test)
             one_hot_pred = np.zeros_like(pred)
             one_hot_pred[np.argmax(pred)] = 1
             predictions.append(one_hot_pred.flatten())

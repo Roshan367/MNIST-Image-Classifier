@@ -1,10 +1,6 @@
-import pandas as pd
 import torch
 import sys
-import os
-from PIL import Image
 import torchvision
-from torchvision import transforms
 import numpy as np
 import joblib
 from torchvision.datasets import MNIST

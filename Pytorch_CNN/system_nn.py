@@ -1,10 +1,7 @@
 from utils import *
 import torch
-import torchvision
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
-from torch.utils.data import TensorDataset, DataLoader
 
 n_epochs = 3
 batch_size_train = 64

@@ -5,19 +5,19 @@ import torch.nn.functional as F
 from Pytorch_CNN.system_nn import *
 import torch.optim as optim
 import numpy as np
-from Scratch_CNN.convolution import *
-from Scratch_CNN.max_pooling import *
-from Scratch_CNN.layers import *
-from Scratch_CNN.loss import *
+import Scratch_CNN.convolution as scratch_conv
+import Scratch_CNN.max_pooling as scratch_pool
+import Scratch_CNN.layers as scratch_layers
+import Scratch_CNN.loss as scratch_loss
 from keras.utils import to_categorical
 
 
 X_train, y_train = get_dataset("train", tensor="cnn")
 y_train = to_categorical(y_train)
 
-conv = Convolution(X_train[0].shape, 6, 1)
-pool = MaxPool(2)
-full = Connected(121, 10)
+conv = scratch_conv.Convolution(X_train[0].shape, 6, 1)
+pool = scratch_pool.MaxPool(2)
+full = scratch_layers.Connected(121, 10)
 
 # training pytorch cnn
 log_interval = 10
@@ -66,7 +66,7 @@ def train_network(X, y, conv, pool, full, lr=0.01, epochs=5):
             conv_out = conv.forward(X[i])
             pool_out = pool.forward(conv_out)
             full_out = full.forward(pool_out)
-            loss = cross_entropy_loss(full_out.flatten(), y[i])
+            loss = scratch_loss.cross_entropy_loss(full_out.flatten(), y[i])
             total_loss += loss
 
             one_hot_pred = np.zeros_like(full_out)
@@ -79,9 +79,9 @@ def train_network(X, y, conv, pool, full, lr=0.01, epochs=5):
             if num_pred == num_y:
                 correct_predictions += 1
 
-            gradient = cross_entropy_loss_gradient(y[i], full_out.flatten()).reshape(
-                (-1, 1)
-            )
+            gradient = scratch_loss.cross_entropy_loss_gradient(
+                y[i], full_out.flatten()
+            ).reshape((-1, 1))
             full_back = full.backward(gradient, lr)
             pool_back = pool.backward(full_back, lr)
             conv_back = conv.backward(pool_back, lr)
@@ -109,8 +109,6 @@ def main():
 
     # Save the trained model
     save_model(model)
-
-    train_loader = get_dataset("train", tensor=True)
 
     print("Training CNN Model")
     for epoch in range(1, n_epochs + 1):
