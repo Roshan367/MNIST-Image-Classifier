@@ -256,26 +256,6 @@ def compute_eigen(data):
     return w, v
 
 
-"""
-FUNCTION COMMENTED OUT FOR ASSIGNMENT SUBMISSION
-UNCOMMENT IF YOU WISH TO VIEW THE PLOTS
-
-This calculates the explained variance ratio for each principal
-component and plots it, helping see how many components are actually
-necessary for PCA
-
-def explained_variance_plot(data):
-    eigenvalues, _ = compute_eigen(data)
-    total_variance = np.sum(eigenvalues)
-    explained_variance_ratio = eigenvalues / total_variance
-    plt.plot(range(1, len(explained_variance_ratio) + 1), explained_variance_ratio)
-    plt.xlabel('Principal Component Index')
-    plt.ylabel('Explained Variance Ratio')
-    plt.title('Explained Variance Plot')
-    plt.show()
-"""
-
-
 # TRAINING SECTION
 
 """

@@ -1,5 +1,13 @@
+# imports
 import numpy as np
 from scipy.signal import correlate2d
+
+"""
+Convolutional layer class for the CNN
+
+Applies a filter to the image for feature extraction
+and contains functionality for the forward and backward passes
+"""
 
 
 class Convolution:
@@ -15,8 +23,15 @@ class Convolution:
             input_weight - filter_size + 1,
         )
 
+        # sets filters and biases randomly on initialisation
         self.filters = np.random.rand(*self.filter_shape)
         self.biases = np.random.rand(*self.output_shape)
+
+    """
+    Performs the forward pass for the convolutional layer
+
+    Cross-correlates the input data with each of the filters
+    """
 
     def forward(self, input_data):
         self.input_data = input_data
@@ -24,8 +39,16 @@ class Convolution:
         output = np.zeros(self.output_shape)
         for i in range(self.num_filters):
             output[i] = correlate2d(self.input_data, self.filters[i], mode="valid")
+        # normalises the output so there are no negative values
         output = np.maximum(output, 0)
         return output
+
+    """
+    Performs the backward pass for the convolutional layer
+
+    Calculates partial differentials and performs gradient
+    descent for filters and biases using learning rate
+    """
 
     def backward(self, dL_dout, lr):
         dL_dinput = np.zeros_like(self.input_data)
@@ -41,8 +64,16 @@ class Convolution:
 
         return dL_dinput
 
+    """
+    Gets current filter and biase values
+    """
+
     def get_params(self):
         return {"filters": self.filters, "biases": self.biases}
+
+    """
+    Sets filter and biase values
+    """
 
     def set_params(self, params):
         self.filters = params["filters"]

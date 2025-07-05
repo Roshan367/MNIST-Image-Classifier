@@ -1,3 +1,4 @@
+# imports
 import tkinter as tk
 import torch
 import torch.nn.functional as F
@@ -17,6 +18,11 @@ from keras.utils import to_categorical
 model = load_model()
 
 test_losses = []
+
+"""
+Class for the GUI for testing the accuracy of the test
+datasets and predicting user drawing using the three models
+"""
 
 
 class DigitClassifierApp:
@@ -77,17 +83,30 @@ class DigitClassifierApp:
         )
         self.label_cnn_scratch_accuracy.place(x=500, y=115)
 
+    """
+    Allows user to draw on the canvas
+    """
+
     def paint(self, event):
         x1, y1 = (event.x - 8), (event.y - 8)
         x2, y2 = (event.x + 8), (event.y + 8)
         self.canvas.create_oval(x1, y1, x2, y2, fill="black", width=8)
         self.draw.ellipse([x1, y1, x2, y2], fill="black")
 
+    """
+    Clears the canvas of current drawings
+    """
+
     def clear(self):
         self.canvas.delete("all")
         self.draw.rectangle([0, 0, 280, 280], fill="white")
         self.label_knn.config(text="KNN Prediction: ")
         self.label_cnn.config(text="CNN Prediction: ")
+
+    """
+    Performs PCA+KNN prediction of the canvas image
+    using the loaded trained model
+    """
 
     def predict(self):
         img = self.image.resize((28, 28))
@@ -104,6 +123,11 @@ class DigitClassifierApp:
         text = f"KNN Prediction: {predicted_digit}"
 
         self.label_knn.config(text=text)
+
+    """
+    Performs Pytorch CNN prediction of the canvas image using
+    the loaded trained model
+    """
 
     def predict_nn(self):
         img = self.image.resize((28, 28))
@@ -130,6 +154,11 @@ class DigitClassifierApp:
         text = f"CNN Prediction: {predicted_digit}"
         self.label_cnn.config(text=text)
 
+    """
+    Tests the PCA+KNN model on a limited clean testing set using
+    the loaded trained model
+    """
+
     def test(self):
         model = load_model()
         test_images, test_labels = get_dataset("test")
@@ -138,6 +167,11 @@ class DigitClassifierApp:
         test_accuracy = accuracy_score(test_labels, test_predictions) * 100
         text = f"KNN Accuracy (Clean): {round(test_accuracy, 3)}%"
         self.label_knn_accuracy.config(text=text)
+
+    """
+    Tests the Pytorch CNN model on a clean testing set using the 
+    loaded trained model
+    """
 
     def test_nn(self):
         test_loader = get_dataset("test", tensor="pytorch cnn")
@@ -157,6 +191,11 @@ class DigitClassifierApp:
         accuracy = 100.0 * correct / len(test_loader.dataset)
         text = f"CNN Accuracy (Clean): {round(float(accuracy), 3)}%"
         self.label_cnn_accuracy.config(text=text)
+
+    """
+    Tests the Custom CNN model on a clean testing set using the loaded
+    trained model
+    """
 
     def test_scratch_nn(self):
         X_test, y_test = get_dataset("test", tensor="cnn")
@@ -182,7 +221,7 @@ class DigitClassifierApp:
         self.label_cnn_scratch_accuracy.config(text=text)
 
 
-# Run the app
+# runs the GUI
 root = tk.Tk()
 app = DigitClassifierApp(root)
 root.mainloop()
