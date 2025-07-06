@@ -2,7 +2,7 @@
 import tkinter as tk
 import torch
 import torch.nn.functional as F
-from Pytorch_CNN.system_nn import *
+import Pytorch_CNN.system_nn as pytorch_cnn
 from torchvision import transforms
 from PIL import Image, ImageDraw, ImageOps
 import numpy as np
@@ -15,7 +15,16 @@ import Scratch_CNN.layers as layers
 from sklearn.metrics import accuracy_score
 from keras.utils import to_categorical
 
-model = load_model()
+pca_knn_model = load_model()
+
+pytorch_cnn_model = pytorch_cnn.Net()
+pytorch_cnn_model.load_state_dict(torch.load("models/cnn_model.pth"))
+
+conv_test = conv.Convolution((28, 28), 6, 1)
+pool_test = pool.MaxPool(2)
+full_test = layers.Connected(121, 10)
+
+load_model_cnn(conv_test, full_test)
 
 test_losses = []
 
@@ -43,14 +52,22 @@ class DigitClassifierApp:
         )
         self.button_predict_nn.place(x=0, y=330)
 
+        self.button_predict_scratch_nn = tk.Button(
+            master, text="Predict Image Custom CNN", command=self.predict_scratch_nn
+        )
+        self.button_predict_scratch_nn.place(x=0, y=370)
+
         self.button_clear = tk.Button(master, text="Clear", command=self.clear)
-        self.button_clear.place(x=0, y=370)
+        self.button_clear.place(x=0, y=410)
 
         self.label_knn = tk.Label(master, text="KNN Prediction: ")
         self.label_knn.place(x=150, y=295)
 
         self.label_cnn = tk.Label(master, text="CNN Prediction: ")
         self.label_cnn.place(x=150, y=335)
+
+        self.label_scratch_cnn = tk.Label(master, text="Custom CNN Prediction: ")
+        self.label_scratch_cnn.place(x=200, y=375)
 
         self.image = Image.new("L", (280, 280), "white")
         self.draw = ImageDraw.Draw(self.image)
@@ -81,7 +98,7 @@ class DigitClassifierApp:
         self.label_cnn_scratch_accuracy = tk.Label(
             master, text="CNN Scratch Accuracy (Clean): "
         )
-        self.label_cnn_scratch_accuracy.place(x=500, y=115)
+        self.label_cnn_scratch_accuracy.place(x=550, y=115)
 
     """
     Allows user to draw on the canvas
@@ -117,8 +134,7 @@ class DigitClassifierApp:
         pca_input = system.image_to_reduced_feature(img_array)
 
         # Predict
-        model = load_model()
-        prediction = model.predict(pca_input)
+        prediction = pca_knn_model.predict(pca_input)
         predicted_digit = prediction[0]
         text = f"KNN Prediction: {predicted_digit}"
 
@@ -145,14 +161,21 @@ class DigitClassifierApp:
         img_tensor = transform(img)
         img_tensor = img_tensor.unsqueeze(0)
 
-        model = Net()
-        model.load_state_dict(torch.load("models/cnn_model.pth"))
-        model.eval()
+        pytorch_cnn_model.eval()
         with torch.no_grad():
-            output = model(img_tensor)
+            output = pytorch_cnn_model(img_tensor)
             predicted_digit = output.argmax(dim=1, keepdim=True).item()
         text = f"CNN Prediction: {predicted_digit}"
         self.label_cnn.config(text=text)
+
+    def predict_scratch_nn(self):
+        img = self.image.resize((28, 28))
+        img = ImageOps.invert(img)
+        img_array = np.array(img)
+
+        pred = scratch_loss.predict(img_array, conv_test, pool_test, full_test)
+        text = f"Custom CNN Prediction: {np.argmax(pred)}"
+        self.label_scratch_cnn.config(text=text)
 
     """
     Tests the PCA+KNN model on a limited clean testing set using
@@ -160,10 +183,9 @@ class DigitClassifierApp:
     """
 
     def test(self):
-        model = load_model()
         test_images, test_labels = get_dataset("test")
         test_feature_vectors = system.image_to_reduced_feature(test_images)
-        test_predictions = model.predict(test_feature_vectors)
+        test_predictions = pca_knn_model.predict(test_feature_vectors)
         test_accuracy = accuracy_score(test_labels, test_predictions) * 100
         text = f"KNN Accuracy (Clean): {round(test_accuracy, 3)}%"
         self.label_knn_accuracy.config(text=text)
@@ -175,14 +197,13 @@ class DigitClassifierApp:
 
     def test_nn(self):
         test_loader = get_dataset("test", tensor="pytorch cnn")
-        model = Net()
-        model.load_state_dict(torch.load("models/cnn_model.pth"))
-        model.eval()
+
+        pytorch_cnn_model.eval()
         test_loss = 0
         correct = 0
         with torch.no_grad():
             for data, target in test_loader:
-                output = model(data)
+                output = pytorch_cnn_model(data)
                 test_loss += F.nll_loss(output, target, reduction="sum").item()
                 pred = output.data.max(1, keepdim=True)[1]
                 correct += pred.eq(target.data.view_as(pred)).sum()
@@ -200,12 +221,6 @@ class DigitClassifierApp:
     def test_scratch_nn(self):
         X_test, y_test = get_dataset("test", tensor="cnn")
         y_test = to_categorical(y_test)
-
-        conv_test = conv.Convolution((28, 28), 6, 1)
-        pool_test = pool.MaxPool(2)
-        full_test = layers.Connected(121, 10)
-
-        load_model_cnn(conv_test, full_test)
 
         predictions = []
 
