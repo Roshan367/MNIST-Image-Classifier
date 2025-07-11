@@ -71,5 +71,5 @@ Activation function(s) - Softmax
 
 Loss Function - Cross-Entropy
 
-Average Accuracy (5 Epochs) - 85-88%
+Average Accuracy (3 Epochs) - 85-88%
 
