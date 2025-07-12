@@ -1,6 +1,7 @@
 # Imports
 from utils import *
 import torch
+import os
 import PCA_KNN.system as system
 import torch.nn.functional as F
 import Pytorch_CNN.system_nn as pytorch_cnn
@@ -11,6 +12,8 @@ import Scratch_CNN.max_pooling as scratch_pool
 import Scratch_CNN.layers as scratch_layers
 import Scratch_CNN.loss as scratch_loss
 from keras.utils import to_categorical
+
+os.makedirs("models", exist_ok=True)
 
 # Loads the datasets for the different models
 X_scratch_cnn_train, y_scratch_cnn_train = get_dataset("train", "cnn")
