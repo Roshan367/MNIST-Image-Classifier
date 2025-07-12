@@ -73,3 +73,5 @@ Loss Function - Cross-Entropy
 
 Average Accuracy (3 Epochs) - 85-88%
 
+If you wish to find out more behind the mathematics of the CNN please read my document [a link](https://github.com/Roshan367/MNIST-Image-Classifier/edit/main/Convolutional-Neural-Network-2.pdf)
+
