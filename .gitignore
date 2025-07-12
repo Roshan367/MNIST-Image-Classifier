@@ -1,1 +1,4 @@
 **/__pycache__/
+cnn_model.pkl
+cnn_model.pth
+trained_model.pkl
