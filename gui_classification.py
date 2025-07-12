@@ -15,6 +15,7 @@ import Scratch_CNN.layers as layers
 from sklearn.metrics import accuracy_score
 from keras.utils import to_categorical
 
+# Loads the trained models
 pca_knn_model = load_model()
 
 pytorch_cnn_model = pytorch_cnn.Net()
@@ -23,7 +24,6 @@ pytorch_cnn_model.load_state_dict(torch.load("models/cnn_model.pth"))
 conv_test = conv.Convolution((28, 28), 6, 1)
 pool_test = pool.MaxPool(2)
 full_test = layers.Connected(121, 10)
-
 load_model_cnn(conv_test, full_test)
 
 test_losses = []
@@ -183,10 +183,10 @@ class DigitClassifierApp:
     """
 
     def test(self):
-        test_images, test_labels = get_dataset("test")
-        test_feature_vectors = system.image_to_reduced_feature(test_images)
+        X_knn_test, y_knn_test = get_dataset("test")
+        test_feature_vectors = system.image_to_reduced_feature(X_knn_test)
         test_predictions = pca_knn_model.predict(test_feature_vectors)
-        test_accuracy = accuracy_score(test_labels, test_predictions) * 100
+        test_accuracy = accuracy_score(y_knn_test, test_predictions) * 100
         text = f"KNN Accuracy (Clean): {round(test_accuracy, 3)}%"
         self.label_knn_accuracy.config(text=text)
 
@@ -196,20 +196,20 @@ class DigitClassifierApp:
     """
 
     def test_nn(self):
-        test_loader = get_dataset("test", tensor="pytorch cnn")
+        cnn_test_loader = get_dataset("test", "pytorch cnn")
 
         pytorch_cnn_model.eval()
         test_loss = 0
         correct = 0
         with torch.no_grad():
-            for data, target in test_loader:
+            for data, target in cnn_test_loader:
                 output = pytorch_cnn_model(data)
                 test_loss += F.nll_loss(output, target, reduction="sum").item()
                 pred = output.data.max(1, keepdim=True)[1]
                 correct += pred.eq(target.data.view_as(pred)).sum()
-        test_loss /= len(test_loader.dataset)
+        test_loss /= len(cnn_test_loader.dataset)
         test_losses.append(test_loss)
-        accuracy = 100.0 * correct / len(test_loader.dataset)
+        accuracy = 100.0 * correct / len(cnn_test_loader.dataset)
         text = f"CNN Accuracy (Clean): {round(float(accuracy), 3)}%"
         self.label_cnn_accuracy.config(text=text)
 
@@ -219,19 +219,19 @@ class DigitClassifierApp:
     """
 
     def test_scratch_nn(self):
-        X_test, y_test = get_dataset("test", tensor="cnn")
-        y_test = to_categorical(y_test)
+        X_scratch_cnn_test, y_scratch_cnn_test = get_dataset("test", "cnn")
+        y_scratch_cnn_test = to_categorical(y_scratch_cnn_test)
 
         predictions = []
 
-        for data in X_test:
+        for data in X_scratch_cnn_test:
             pred = scratch_loss.predict(data, conv_test, pool_test, full_test)
             one_hot_pred = np.zeros_like(pred)
             one_hot_pred[np.argmax(pred)] = 1
             predictions.append(one_hot_pred.flatten())
 
         predictions = np.array(predictions)
-        accuracy = accuracy_score(predictions, y_test) * 100.0
+        accuracy = accuracy_score(predictions, y_scratch_cnn_test) * 100.0
         text = f"CNN Scratch Accuracy (Clean): {round(float(accuracy), 3)}%"
         self.label_cnn_scratch_accuracy.config(text=text)
 

@@ -7,8 +7,7 @@ Loss function used at the end of the forward pass
 
 
 def cross_entropy_loss(predictions, targets):
-    num_samples = 10
-
+    num_samples = 1
     epsilon = 1e-7
     predictions = np.clip(predictions, epsilon, 1 - epsilon)
     loss = -np.sum(targets * np.log(predictions)) / num_samples
@@ -21,9 +20,8 @@ Derivative of the loss function used for the backward pass
 
 
 def cross_entropy_loss_gradient(actual_labels, predicted_probs):
-    num_samples = actual_labels.shape[0]
-    gradient = -actual_labels / (predicted_probs + 1e-7) / num_samples
-
+    num_samples = 1  # single sample
+    gradient = (predicted_probs - actual_labels) / num_samples
     return gradient
 
 

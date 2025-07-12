@@ -33,14 +33,6 @@ class Connected:
         return probabilities
 
     """
-    Derivation of the activation function to be used
-    in the backward pass
-    """
-
-    def softmax_derivative(self, s):
-        return np.diagflat(s) - np.dot(s, s.T)
-
-    """
     Performs the forward pass for the fully connected layer
 
     Flattens the input and performs a linear transformation
@@ -63,15 +55,12 @@ class Connected:
     """
 
     def backward(self, dL_dout, lr):
-        dL_dy = np.dot(self.softmax_derivative(self.output), dL_dout)
-
+        dL_dy = dL_dout
         dL_dw = np.dot(dL_dy, self.input_data.flatten().reshape(1, -1))
-
         dL_db = dL_dy
 
         dL_dinput = np.dot(self.weights.T, dL_dy)
         dL_dinput = dL_dinput.reshape(self.input_data.shape)
-
         self.weights -= lr * dL_dw
         self.biases -= lr * dL_db
 

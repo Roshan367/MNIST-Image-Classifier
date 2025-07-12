@@ -12,12 +12,12 @@ for the different models
 """
 
 
-def get_dataset(split, tensor="default"):
+def get_dataset(split, model_type="default"):
     batch_size_train = 64
     batch_size_test = 1000
 
     # loads training and test dataset as tensors for Pytorch CNN model
-    if tensor == "pytorch cnn":
+    if model_type == "pytorch cnn":
         # Training set
         train_loader = torch.utils.data.DataLoader(
             MNIST(
@@ -57,7 +57,7 @@ def get_dataset(split, tensor="default"):
             return test_loader
 
     # loads Training and Testing dataset for the custom scratch CNN
-    elif tensor == "cnn":
+    elif model_type == "cnn":
         # training set
         train_dataset = MNIST(
             root="/home/roshan/Documents/MNIST-Image-Classifier/mnist_subset/",

@@ -13,15 +13,15 @@ import Scratch_CNN.loss as scratch_loss
 from keras.utils import to_categorical
 
 # Loads the datasets for the different models
-X_train, y_train = get_dataset("train", tensor="cnn")
-y_train = to_categorical(y_train)
+X_scratch_cnn_train, y_scratch_cnn_train = get_dataset("train", "cnn")
+y_scratch_cnn_train = to_categorical(y_scratch_cnn_train)
 
-train_loader = get_dataset("train", tensor="pytorch cnn")
+cnn_train_loader = get_dataset("train", "pytorch cnn")
 
-train_images, train_labels = get_dataset("train")
+X_knn_train, y_knn_train = get_dataset("train")
 
 # Setting up custom cnn
-conv = scratch_conv.Convolution(X_train[0].shape, 6, 1)
+conv = scratch_conv.Convolution(X_scratch_cnn_train[0].shape, 6, 1)
 pool = scratch_pool.MaxPool(2)
 full = scratch_layers.Connected(121, 10)
 
@@ -43,10 +43,10 @@ Performs the forward and back passes and updates the parameters using batches
 """
 
 
-def train(epoch):
+def train_cnn(epoch):
     # set model to training mode
     network.train()
-    for batch_idx, (data, target) in enumerate(train_loader):
+    for batch_idx, (data, target) in enumerate(cnn_train_loader):
         # clear previous gradients
         optimiser.zero_grad()
         # forward pass
@@ -62,15 +62,31 @@ def train(epoch):
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
                     epoch,
                     batch_idx * len(data),
-                    len(train_loader.dataset),
-                    100.0 * batch_idx / len(train_loader),
+                    len(cnn_train_loader.dataset),
+                    100.0 * batch_idx / len(cnn_train_loader),
                     loss.item(),
                 )
             )
             train_losses.append(loss.item())
             train_counter.append(
-                (batch_idx * 64) + ((epoch - 1) * len(train_loader.dataset))
+                (batch_idx * 64) + ((epoch - 1) * len(cnn_train_loader.dataset))
             )
+
+
+"""
+Training for the PCA and KNN model
+
+Performs dimensionality reduction and then performs KNN
+"""
+
+
+def train_knn():
+    # Extract dimension-reduced features for training
+    train_feature_vectors = system.image_to_reduced_feature(X_knn_train, "train")
+    # Train the classifier
+    model = system.training_model(train_feature_vectors, y_knn_train)
+    # Save the trained model
+    save_model(model)
 
 
 """
@@ -80,7 +96,7 @@ Performs the forward and backward passes
 """
 
 
-def train_network(X, y, conv, pool, full, lr=0.01, epochs=5):
+def train_scratch_cnn(X, y, conv, pool, full, lr=0.01, epochs=3):
     for epoch in range(epochs):
         total_loss = 0.0
         correct_predictions = 0
@@ -116,7 +132,7 @@ def train_network(X, y, conv, pool, full, lr=0.01, epochs=5):
             conv_back = conv.backward(pool_back, lr)
 
         average_loss = total_loss / len(X)
-        accuracy = correct_predictions / len(X_train) * 100.0
+        accuracy = correct_predictions / len(X_scratch_cnn_train) * 100.0
         print(
             f"Epoch {epoch + 1}/{epochs} - Loss: {average_loss:.4f} - Accuracy: {accuracy:.2f}%"
         )
@@ -125,20 +141,15 @@ def train_network(X, y, conv, pool, full, lr=0.01, epochs=5):
 
 
 def main():
-    print("Training Scratch CNN")
-    train_network(X_train, y_train, conv, pool, full)
+    print("Training Custom CNN Model")
+    train_scratch_cnn(X_scratch_cnn_train, y_scratch_cnn_train, conv, pool, full)
 
     print("Training KNN Model")
-    # Extract dimension-reduced features for training
-    train_feature_vectors = system.image_to_reduced_feature(train_images, "train")
-    # Train the classifier
-    model = system.training_model(train_feature_vectors, train_labels)
-    # Save the trained model
-    save_model(model)
+    train_knn()
 
     print("Training CNN Model")
     for epoch in range(1, 3 + 1):
-        train(epoch)
+        train_cnn(epoch)
     torch.save(network.state_dict(), "models/cnn_model.pth")
 
 
